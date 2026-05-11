@@ -1,0 +1,1584 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slayers Retribution — Roadmap</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+<style>
+  :root {
+    --bg: #0e0f13;
+    --card: #16181f;
+    --card-2: #1e212b;
+    --line: #2a2e3a;
+    --line-strong: #3a3f4e;
+    --text: #e7e9ee;
+    --muted: #9099a8;
+    --gold: #d6b266;
+    --gold-soft: #8a7340;
+    --accent: #ff5a5a;
+    --green: #6cd28b;
+    --blue: #6ca7d2;
+    --orange: #ffb567;
+    --purple: #b585ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
+  body { padding: 48px 64px; max-width: 1180px; margin: 0 auto; }
+
+  h1 { font-size: 42px; margin: 0 0 4px; letter-spacing: -1px; }
+  h1 .accent { color: var(--gold); }
+  .tagline { color: var(--muted); font-size: 15px; margin-bottom: 28px; letter-spacing: 1px; text-transform: uppercase; }
+  .meta { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding-bottom: 28px; border-bottom: 1px solid var(--line); margin-bottom: 32px; }
+  .meta .item { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; font-size: 13px; }
+  .meta .item strong { color: var(--gold); display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+
+  .progress-wrap {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding: 12px 0 18px;
+    border-bottom: 1px solid var(--line);
+    z-index: 20;
+    margin-bottom: 28px;
+  }
+  .progress-wrap .label { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .progress-wrap .label strong { color: var(--gold); font-size: 16px; font-family: 'JetBrains Mono', 'Consolas', monospace; letter-spacing: 0; }
+  .bar { height: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+  .bar .fill { height: 100%; background: linear-gradient(90deg, var(--gold), #ffd17a); width: 0%; transition: width 0.4s ease; }
+  .controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .btn {
+    background: var(--card); color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;
+    letter-spacing: 0.4px; transition: all 0.15s;
+  }
+  .btn:hover { background: var(--card-2); border-color: var(--gold-soft); }
+  .btn.danger:hover { border-color: var(--accent); color: var(--accent); }
+
+  h2 { font-size: 22px; margin: 40px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); letter-spacing: 0.4px; }
+
+  .phase { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin: 14px 0; overflow: hidden; transition: border-color 0.2s; }
+  .phase.complete { border-color: var(--green); }
+  .phase .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 22px; cursor: pointer; user-select: none; transition: background 0.15s; }
+  .phase .head:hover { background: var(--card-2); }
+  .phase .head-left { display: flex; align-items: center; gap: 14px; }
+  .phase .chevron { transition: transform 0.2s; color: var(--muted); }
+  .phase.open .chevron { transform: rotate(90deg); }
+  .phase .name { font-size: 18px; font-weight: 700; }
+  .phase .dates { color: var(--gold); font-size: 13px; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .phase .head-right { display: flex; align-items: center; gap: 12px; }
+  .phase .completion { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', 'Consolas', monospace; min-width: 50px; text-align: right; }
+  .phase .mini-bar { width: 80px; height: 6px; background: var(--card-2); border-radius: 999px; overflow: hidden; }
+  .phase .mini-bar .mini-fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.3s; }
+  .phase.complete .mini-bar .mini-fill { background: var(--green); }
+
+  .phase .body { padding: 0 22px 16px; border-top: 1px solid var(--line); display: none; }
+  .phase.open .body { display: block; padding-top: 16px; }
+  .phase .pills { margin-bottom: 12px; }
+  .pill { display: inline-block; background: var(--card-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-right: 6px; margin-bottom: 4px; }
+  .pill.cls { color: var(--purple); border-color: #4a3a6a; }
+  .pill.world { color: var(--blue); border-color: #3a5a6a; }
+
+  .subhead {
+    font-size: 11px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase;
+    margin: 18px 0 6px; padding-top: 12px; border-top: 1px dashed var(--line);
+  }
+  .subhead:first-of-type { padding-top: 0; border-top: none; margin-top: 0; }
+
+  .task-list { list-style: none; padding: 0; margin: 0; }
+  .task-list li {
+    display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px;
+    border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 6px;
+    transition: background 0.1s;
+  }
+  .task-list li:last-child { border-bottom: none; }
+  .task-list li:hover { background: var(--card-2); }
+  .task-list li.done .text { text-decoration: line-through; color: var(--muted); }
+  .task-list li.done .check { background: var(--green); border-color: var(--green); }
+  .task-list li.done .check::after { content: '✓'; color: #0e0f13; font-weight: 800; font-size: 12px; }
+  .task-list .check { flex-shrink: 0; width: 18px; height: 18px; border: 2px solid var(--line-strong); border-radius: 5px; background: var(--bg); transition: all 0.15s; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .task-list .text { flex: 1; font-size: 14px; }
+  .task-list .text .sub { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .task-list .budget {
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 2px;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 11px;
+    color: var(--gold);
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    cursor: help;
+  }
+  .task-list li.done .budget { opacity: 0.4; }
+  .task-list .budget .pctline {
+    display: block;
+    color: var(--muted);
+    font-size: 9px;
+    text-align: center;
+    margin-top: 1px;
+  }
+
+  .task-list .roles {
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-self: flex-start;
+    margin-top: 2px;
+    max-width: 230px;
+    justify-content: flex-end;
+  }
+  .role-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid;
+    background: var(--card-2);
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+  .role-script { color: #8aa8ff; border-color: #2c3d6e; }
+  .role-design { color: #ffcc66; border-color: #6b5824; }
+  .role-anim   { color: #ff8ab2; border-color: #6e2c46; }
+  .role-model  { color: #b9ff8a; border-color: #406e2c; }
+  .role-env    { color: #8affb6; border-color: #2c6e4e; }
+  .role-ui     { color: #ffb567; border-color: #6e4a24; }
+  .role-vfx    { color: #c79aff; border-color: #4e2c6e; }
+  .role-sound  { color: #66e2ff; border-color: #246e6e; }
+  .role-music  { color: #ff7eb0; border-color: #6e2c4a; }
+  .role-qa     { color: #ffd17a; border-color: #6e5824; }
+  .role-comm   { color: #aaff8a; border-color: #466e2c; }
+
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+  }
+  .role-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .role-card .role-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .role-card .role-name {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .role-card .role-count {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+  }
+  .role-card ul { list-style: none; padding: 0; margin: 0; font-size: 12px; }
+  .role-card li { padding: 4px 0; color: var(--text); display: flex; gap: 6px; }
+  .role-card li .phase-ref { color: var(--muted); font-family: 'JetBrains Mono', 'Consolas', monospace; flex-shrink: 0; }
+  .role-card li.done { color: var(--muted); text-decoration: line-through; }
+
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0 4px; }
+  .filter-row .filter-btn {
+    font-size: 11px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card); color: var(--text);
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .filter-row .filter-btn.active { background: var(--gold); color: #1a1408; border-color: var(--gold); }
+  .task-list li.hidden { display: none; }
+
+  /* Pace tracker */
+  .pace-panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin: 18px 0;
+  }
+  .pace-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .pace-header h3 { margin: 0; font-size: 14px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
+  .pace-header .day-num { color: var(--muted); font-size: 12px; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .pace-bar-wrap { position: relative; height: 14px; background: var(--card-2); border-radius: 999px; overflow: visible; border: 1px solid var(--line); }
+  .pace-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), #ffd17a); border-radius: 999px; width: 0%; transition: width 0.4s; }
+  .pace-target-line { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #ff5a5a; box-shadow: 0 0 6px rgba(255,90,90,0.6); }
+  .pace-target-label {
+    position: absolute;
+    top: -22px;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #ff5a5a;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .pace-readout { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .pace-stat { background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .pace-stat .stat-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+  .pace-stat .stat-value { font-size: 22px; font-weight: 800; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .pace-stat.green .stat-value { color: var(--green); }
+  .pace-stat.yellow .stat-value { color: var(--orange); }
+  .pace-stat.red .stat-value { color: var(--accent); }
+
+  .pace-message {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    background: var(--card-2);
+    border-left: 3px solid var(--gold);
+  }
+  .pace-message.green { border-left-color: var(--green); }
+  .pace-message.yellow { border-left-color: var(--orange); }
+  .pace-message.red { border-left-color: var(--accent); }
+
+  /* Phase pace badge */
+  .phase .pace-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--card-2);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+  }
+  .phase .pace-badge.ahead { color: var(--green); border-color: #2e6e44; }
+  .phase .pace-badge.ontrack { color: var(--gold); border-color: var(--gold-soft); }
+  .phase .pace-badge.behind { color: var(--orange); border-color: #6e4824; }
+  .phase .pace-badge.late { color: var(--accent); border-color: #6e2c2c; }
+  .phase .pace-badge.upcoming { color: var(--muted); }
+  .phase .pace-badge.done { color: var(--green); border-color: var(--green); background: rgba(108, 210, 139, 0.08); }
+
+  /* Today's focus */
+  .focus-panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; margin: 18px 0; }
+  .focus-panel h3 { margin: 0 0 12px; font-size: 14px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
+  .focus-panel ul { list-style: none; padding: 0; margin: 0; }
+  .focus-panel li { padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+  .focus-panel li:last-child { border-bottom: none; }
+  .focus-panel li:hover { background: var(--card-2); }
+  .focus-panel li .focus-check { width: 14px; height: 14px; border: 2px solid var(--line-strong); border-radius: 4px; flex-shrink: 0; }
+  .focus-panel li.done .focus-check { background: var(--green); border-color: var(--green); }
+  .focus-panel li.done .focus-check::after { content: '✓'; color: #0e0f13; font-size: 10px; font-weight: 800; }
+  .focus-panel li.done .focus-text { text-decoration: line-through; color: var(--muted); }
+  .focus-panel li .focus-text { flex: 1; }
+  .focus-panel li .focus-phase { color: var(--muted); font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 11px; }
+
+  /* Streak / log */
+  .streak-row { display: flex; gap: 12px; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .streak-num { font-size: 28px; font-weight: 800; color: var(--gold); font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .streak-label { color: var(--muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+  .log-input { flex: 1; background: var(--card-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; font-family: inherit; }
+  .log-input:focus { outline: none; border-color: var(--gold-soft); }
+  .log-list { margin-top: 12px; max-height: 200px; overflow-y: auto; }
+  .log-entry { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 12px; display: flex; gap: 8px; }
+  .log-entry .log-date { color: var(--muted); font-family: 'JetBrains Mono', 'Consolas', monospace; flex-shrink: 0; min-width: 70px; }
+  .log-entry .log-text { flex: 1; }
+
+  /* User panel */
+  .user-panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin: 18px 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .user-panel .user-current {
+    flex: 1;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .user-panel .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+    color: #0e0f13;
+    flex-shrink: 0;
+  }
+  .user-panel .user-meta { display: flex; flex-direction: column; }
+  .user-panel .user-name { font-weight: 700; font-size: 14px; }
+  .user-panel .user-role { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px; }
+  .user-input-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .user-input-row input, .user-input-row select {
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .user-input-row input:focus, .user-input-row select:focus { outline: none; border-color: var(--gold-soft); }
+  .user-toggle {
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 11px;
+    cursor: pointer;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .user-toggle.on { background: var(--gold); color: #1a1408; border-color: var(--gold); }
+
+  .ownership-mine {
+    box-shadow: inset 3px 0 0 var(--gold);
+  }
+
+  /* Sync badge */
+  .sync-badge {
+    font-size: 10px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-left: 8px;
+  }
+  .sync-badge.online { color: var(--green); border-color: #2e6e44; background: rgba(108, 210, 139, 0.08); }
+  .sync-badge.offline { color: var(--muted); border-color: var(--line); }
+
+  /* Team progress */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .team-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .team-card .team-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .team-card .team-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--gold); color: #1a1408;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 12px; flex-shrink: 0;
+  }
+  .team-card .team-meta { flex: 1; min-width: 0; }
+  .team-card .team-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .team-card .team-role { font-size: 10px; color: var(--muted); letter-spacing: 0.4px; text-transform: uppercase; }
+  .team-card .team-pct { font-size: 14px; font-weight: 800; font-family: 'JetBrains Mono', 'Consolas', monospace; color: var(--gold); }
+  .team-card .team-bar { height: 5px; background: var(--card-2); border-radius: 999px; overflow: hidden; }
+  .team-card .team-bar-fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.3s; }
+
+  .launch { background: linear-gradient(135deg, #2a1d10, #161018); border: 1px solid var(--gold); border-radius: 14px; padding: 22px 26px; margin: 24px 0; text-align: center; transition: transform 0.2s; }
+  .launch:hover { transform: translateY(-2px); }
+  .launch .label { color: var(--gold); font-size: 12px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; }
+  .launch .date { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+  .launch .countdown { color: var(--muted); font-size: 12px; margin-top: 6px; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .launch.release { background: linear-gradient(135deg, #102a1d, #101816); border-color: var(--green); }
+  .launch.release .label { color: var(--green); }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+  td:first-child { color: var(--gold); font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 13px; }
+  td.count { font-weight: 700; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+
+  .musts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .must { background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; transition: border-color 0.15s; }
+  .must:hover { border-color: var(--gold-soft); }
+  .must .title { color: var(--gold); font-weight: 700; font-size: 13px; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 4px; }
+  .must .desc { color: var(--muted); font-size: 13px; }
+
+  .footnote { margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+  .risk { color: var(--orange); }
+
+  @page { size: A4; margin: 14mm; }
+  @media print {
+    body { background: white; color: #1a1a1a; padding: 0; max-width: 100%; }
+    .progress-wrap, .controls { display: none; }
+    h1 .accent, .phase .dates, td:first-child { color: #b58a3a; }
+    .phase, .meta .item, .must, table { background: white; border-color: #ddd; }
+    .phase .body { display: block !important; }
+    .phase .chevron { display: none; }
+    .launch { background: #fff8e6; }
+    .launch.release { background: #effaf1; }
+    .footnote, .meta .item, th, .task-list .text .sub { color: #555; }
+  }
+</style>
+</head>
+<body>
+  <h1>Slayers Retribution <span class="accent">— Roadmap</span></h1>
+  <div class="tagline">Demon Slayer-inspired Samurai · Early Access → Release</div>
+
+  <div class="meta">
+    <div class="item"><strong>Doc Date</strong>2026-05-11</div>
+    <div class="item"><strong>EA Target</strong>2026-12-15</div>
+    <div class="item"><strong>Release Target</strong>2027-03-15</div>
+    <div class="item"><strong>Sub-Classes</strong>Samurai · Ninja · Gunsmith · Grappler</div>
+    <div class="item"><strong>Total Runway</strong>~31 weeks</div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="label">
+      <span>Overall progress</span>
+      <strong id="progressText">0%</strong>
+    </div>
+    <div class="bar"><div class="fill" id="progressFill"></div></div>
+    <div class="controls">
+      <button class="btn" onclick="expandAll(true)">Expand all</button>
+      <button class="btn" onclick="expandAll(false)">Collapse all</button>
+      <button class="btn danger" onclick="resetAll()">Reset progress</button>
+      <button class="btn" onclick="window.print()">Save as PDF</button>
+    </div>
+  </div>
+
+  <div class="user-panel">
+    <div class="user-current">
+      <div class="avatar" id="userAvatar" style="background: var(--gold)">?</div>
+      <div class="user-meta">
+        <div class="user-name" id="userName">Not signed in</div>
+        <div class="user-role" id="userRole">Sign in below to track your tasks</div>
+      </div>
+    </div>
+    <div class="user-input-row">
+      <input id="userNameInput" placeholder="Your name" style="width: 140px" />
+      <select id="userRoleInput">
+        <option value="">Pick role…</option>
+      </select>
+      <button class="btn" onclick="signIn()">Sign in</button>
+      <button class="btn" onclick="signOut()">Switch user</button>
+      <button class="user-toggle" id="mineToggle" onclick="toggleMineOnly()">My tasks only</button>
+      <span class="sync-badge offline" id="syncBadge" title="Firebase config missing — running in local-only mode">Offline</span>
+    </div>
+  </div>
+
+  <h2>Team Progress</h2>
+  <div class="team-grid" id="teamGrid">
+    <div style="color: var(--muted); font-size: 13px;">Sign in to start showing your progress. Once Firebase is configured, every team member's progress appears here in real time.</div>
+  </div>
+
+  <div class="pace-panel">
+    <div class="pace-header">
+      <h3>Pace Tracker</h3>
+      <span class="day-num" id="dayNum"></span>
+    </div>
+    <div class="pace-bar-wrap" title="Gold = your actual progress · Red line = where you should be today">
+      <div class="pace-bar-fill" id="paceFill"></div>
+      <div class="pace-target-line" id="paceTarget"><div class="pace-target-label" id="paceTargetLabel">target</div></div>
+    </div>
+    <div class="pace-readout">
+      <div class="pace-stat" id="statTarget">
+        <div class="stat-label">Should be at</div>
+        <div class="stat-value">0%</div>
+      </div>
+      <div class="pace-stat" id="statActual">
+        <div class="stat-label">Actually at</div>
+        <div class="stat-value">0%</div>
+      </div>
+      <div class="pace-stat" id="statDelta">
+        <div class="stat-label">Delta</div>
+        <div class="stat-value">0%</div>
+      </div>
+    </div>
+    <div class="pace-message" id="paceMessage">Tracker initializing…</div>
+
+    <div class="streak-row">
+      <div>
+        <div class="streak-num" id="streakNum">0</div>
+        <div class="streak-label">Day streak</div>
+      </div>
+      <input class="log-input" id="logInput" placeholder="What did you ship today? (Enter to log)" />
+    </div>
+    <div class="log-list" id="logList"></div>
+  </div>
+
+  <div class="focus-panel">
+    <h3>This Week's Focus</h3>
+    <ul id="focusList"><li class="focus-text" style="color: var(--muted)">Loading…</li></ul>
+  </div>
+
+  <h2>Filter by Role</h2>
+  <div class="filter-row" id="filterRow"></div>
+
+  <h2>Phases</h2>
+
+  <div class="phase" data-phase="1">
+    <div class="head" onclick="togglePhase(this)">
+      <div class="head-left">
+        <span class="chevron">▶</span>
+        <div>
+          <div class="name">Phase 1 — Polish &amp; Stabilize</div>
+          <div class="dates">2026-05-11 → 2026-06-22 · 6 weeks</div>
+        </div>
+      </div>
+      <div class="head-right">
+        <div class="mini-bar"><div class="mini-fill"></div></div>
+        <div class="completion">0 / 0</div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="pills">
+        <span class="pill">Combat</span><span class="pill">Infra</span><span class="pill">Anti-exploit</span>
+      </div>
+      <ul class="task-list">
+        <li><div class="check"></div><div class="text">Final combat tuning pass<span class="sub">M1, parry, dodge, dash, combat arts — no balance changes after this phase</span></div></li>
+        <li><div class="check"></div><div class="text">Anti-exploit hardening<span class="sub">Server-side movement bounds, damage rate-limits, status validation</span></div></li>
+        <li><div class="check"></div><div class="text">Datastore infrastructure<span class="sub">Player save: level, XP, currency, class, unlocks, equipped cosmetics</span></div></li>
+        <li><div class="check"></div><div class="text">Performance budget pass<span class="sub">60fps median on mid-tier desktop</span></div></li>
+        <li><div class="check"></div><div class="text">Bug pass on combat<span class="sub">Parry, dodge, knockback, wall impact</span></div></li>
+        <li><div class="check"></div><div class="text">Save/load player data end-to-end<span class="sub">Profile load on join, save on leave / periodic</span></div></li>
+        <li><div class="check"></div><div class="text">First-pass HUD polish<span class="sub">Stamina, posture, breathing meter, combat arts UI</span></div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase" data-phase="2">
+    <div class="head" onclick="togglePhase(this)">
+      <div class="head-left">
+        <span class="chevron">▶</span>
+        <div>
+          <div class="name">Phase 2 — Content &amp; Systems</div>
+          <div class="dates">2026-06-22 → 2026-11-23 · 22 weeks</div>
+        </div>
+      </div>
+      <div class="head-right">
+        <div class="mini-bar"><div class="mini-fill"></div></div>
+        <div class="completion">0 / 0</div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="pills">
+        <span class="pill cls">Sub-classes</span><span class="pill world">World</span><span class="pill">Bosses</span><span class="pill">Progression</span><span class="pill">Tutorial</span><span class="pill">Shop</span>
+      </div>
+
+      <div class="subhead">Sub-class system &amp; classes</div>
+      <ul class="task-list">
+        <li><div class="check"></div><div class="text">Sub-class framework<span class="sub">Class selection, class-locked abilities, datastore-tied class slot</span></div></li>
+        <li><div class="check"></div><div class="text">Samurai — finalize as base class<span class="sub">Existing katana/breathing kit polished as the default class</span></div></li>
+        <li><div class="check"></div><div class="text">Ninja sub-class<span class="sub">Stealth status, shuriken projectile, faster dashes, smoke escape</span></div></li>
+        <li><div class="check"></div><div class="text">Gunsmith sub-class<span class="sub">Aiming UI, recoil, reload, ammo, ranged projectile damage handling</span></div></li>
+        <li><div class="check"></div><div class="text">Grappler sub-class<span class="sub">Extend grapple system, close-range grabs, throw moves</span></div></li>
+
+        <div class="subhead">World systems</div>
+        <li><div class="check"></div><div class="text">Horse / mount system<span class="sub">Mount/dismount, ride animations, mount-only attacks, summon item</span></div></li>
+        <li><div class="check"></div><div class="text">Blacksmith / sword crafting<span class="sub">Forge UI, material collection, weapon upgrade tree, attribute rolls</span></div></li>
+        <li><div class="check"></div><div class="text">Bind manager (keybind remapping)<span class="sub">Settings UI: all actions rebindable, saved to datastore</span></div></li>
+
+        <div class="subhead">Progression &amp; economy</div>
+        <li><div class="check"></div><div class="text">Progression system<span class="sub">XP curve, level rewards, breathing/combat-art unlocks gated by level</span></div></li>
+        <li><div class="check"></div><div class="text">Currency &amp; rewards loop<span class="sub">Soft currency from kills/bosses; spent on cosmetics &amp; crafting</span></div></li>
+        <li><div class="check"></div><div class="text">Customization system<span class="sub">Skins, hair, accessories — equip + preview</span></div></li>
+        <li><div class="check"></div><div class="text">Cosmetic shop UI<span class="sub">8–12 skins + 4–6 hair/accessory pieces at launch</span></div></li>
+        <li><div class="check"></div><div class="text">XP booster gamepass<span class="sub">2× XP product/pass</span></div></li>
+
+        <div class="subhead">World content</div>
+        <li><div class="check"></div><div class="text">Map 1 — full dress and lighting<span class="sub">Hub/explorable map, performance validated</span></div></li>
+        <li><div class="check"></div><div class="text">Map 2 — combat zone<span class="sub">Smaller arena-style map</span></div></li>
+        <li><div class="check"></div><div class="text">Boss 1 — end-to-end<span class="sub">Intro, phases, telegraphed attacks, reward drop</span></div></li>
+        <li><div class="check"></div><div class="text">Boss 2 — end-to-end<span class="sub">Different moveset and theme</span></div></li>
+        <li><div class="check"></div><div class="text">Tutorial sequence (~3–4 min)<span class="sub">M1 → Parry → Dash → Combat arts → Class basics → Breathing</span></div></li>
+
+        <div class="subhead">Polish &amp; presentation</div>
+        <li><div class="check"></div><div class="text">Sound design pass<span class="sub">Hit SFX, class-specific SFX, breathing, ambient, footsteps</span></div></li>
+        <li><div class="check"></div><div class="text">Music tracks (4–5)<span class="sub">Menu, exploration, combat, boss, town/forge</span></div></li>
+        <li><div class="check"></div><div class="text">Main menu &amp; character/class select<span class="sub">Polished entry screen</span></div></li>
+        <li><div class="check"></div><div class="text">VFX polish pass<span class="sub">Combat arts, class abilities, screen effects</span></div></li>
+        <li><div class="check"></div><div class="text">Friend / party + leaderboard<span class="sub">Squad invite + server-side leaderboards</span></div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase" data-phase="3">
+    <div class="head" onclick="togglePhase(this)">
+      <div class="head-left">
+        <span class="chevron">▶</span>
+        <div>
+          <div class="name">Phase 3 — Polish &amp; QA</div>
+          <div class="dates">2026-11-23 → 2026-12-07 · 2 weeks</div>
+        </div>
+      </div>
+      <div class="head-right">
+        <div class="mini-bar"><div class="mini-fill"></div></div>
+        <div class="completion">0 / 0</div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="pills"><span class="pill">Bug bash</span><span class="pill">Perf</span><span class="pill">Final UI</span></div>
+      <ul class="task-list">
+        <li><div class="check"></div><div class="text">Full bug bash<span class="sub">Combat, classes, world systems, UI</span></div></li>
+        <li><div class="check"></div><div class="text">Performance optimization<span class="sub">Particles, draw calls, LOD, streaming review</span></div></li>
+        <li><div class="check"></div><div class="text">Final UI polish<span class="sub">Animations, transitions, microcopy, button feedback</span></div></li>
+        <li><div class="check"></div><div class="text">Onboarding flow tightening<span class="sub">First 30 seconds matter most — fix what's confusing</span></div></li>
+        <li><div class="check"></div><div class="text">Marketing materials<span class="sub">Game icon, thumbnails, short trailer/gif loop</span></div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase" data-phase="4">
+    <div class="head" onclick="togglePhase(this)">
+      <div class="head-left">
+        <span class="chevron">▶</span>
+        <div>
+          <div class="name">Phase 4 — Closed Beta</div>
+          <div class="dates">2026-12-07 → 2026-12-15 · ~1 week</div>
+        </div>
+      </div>
+      <div class="head-right">
+        <div class="mini-bar"><div class="mini-fill"></div></div>
+        <div class="completion">0 / 0</div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="pills"><span class="pill">Testers</span><span class="pill">Telemetry</span><span class="pill">Last fixes</span></div>
+      <ul class="task-list">
+        <li><div class="check"></div><div class="text">Invite 200+ testers<span class="sub">Discord-driven invite</span></div></li>
+        <li><div class="check"></div><div class="text">Hook up telemetry<span class="sub">FPS, crashes, session length, hit rates, drop-off points, class pick rates</span></div></li>
+        <li><div class="check"></div><div class="text">Daily bug triage<span class="sub">Hotfix critical; defer non-critical to live ops</span></div></li>
+        <li><div class="check"></div><div class="text">Creator outreach<span class="sub">Send keys to Roblox content creators ~5 days pre-launch</span></div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="launch">
+    <div class="label">Early Access Launch</div>
+    <div class="date">2026-12-15</div>
+    <div class="countdown" id="eaCountdown"></div>
+  </div>
+
+  <div class="phase" data-phase="5">
+    <div class="head" onclick="togglePhase(this)">
+      <div class="head-left">
+        <span class="chevron">▶</span>
+        <div>
+          <div class="name">Phase 5 — Live Iteration</div>
+          <div class="dates">2026-12-15 → 2027-03-15 · ~13 weeks</div>
+        </div>
+      </div>
+      <div class="head-right">
+        <div class="mini-bar"><div class="mini-fill"></div></div>
+        <div class="completion">0 / 0</div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="pills"><span class="pill">Content drops</span><span class="pill">Balance</span><span class="pill">Community</span></div>
+      <ul class="task-list">
+        <li><div class="check"></div><div class="text">Weekly patch cadence<span class="sub">Bugfixes + small balance every week</span></div></li>
+        <li><div class="check"></div><div class="text">New boss every 3 weeks<span class="sub">~4 new bosses across the EA period</span></div></li>
+        <li><div class="check"></div><div class="text">New breathing / combat art every 2 weeks<span class="sub">~6 new techniques</span></div></li>
+        <li><div class="check"></div><div class="text">Class balance patches<span class="sub">Adjust Samurai/Ninja/Gunsmith/Grappler based on win-rate data</span></div></li>
+        <li><div class="check"></div><div class="text">5th sub-class preview<span class="sub">Tease the next class for post-1.0</span></div></li>
+        <li><div class="check"></div><div class="text">Season 1 cosmetic drop<span class="sub">Mid-EA new skin lineup</span></div></li>
+        <li><div class="check"></div><div class="text">Public roadmap visibility<span class="sub">Pin updated roadmap in Discord</span></div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="launch release">
+    <div class="label">Full Release · v1.0</div>
+    <div class="date">2027-03-15</div>
+    <div class="countdown" id="releaseCountdown"></div>
+  </div>
+
+  <h2>EA Must-Haves (Locked In)</h2>
+  <div class="musts">
+    <div class="must"><div class="title">4 Sub-Classes</div><div class="desc">Samurai (base), Ninja, Gunsmith, Grappler — all playable at launch.</div></div>
+    <div class="must"><div class="title">Horse / Mount</div><div class="desc">Rideable mount with summon item.</div></div>
+    <div class="must"><div class="title">Blacksmith</div><div class="desc">Forge for sword crafting + upgrades.</div></div>
+    <div class="must"><div class="title">Bind Manager</div><div class="desc">Keybind remapping in settings.</div></div>
+    <div class="must"><div class="title">Progression</div><div class="desc">XP, levels, unlock breathings/combat arts over time.</div></div>
+    <div class="must"><div class="title">Customization</div><div class="desc">Skins, hair, accessories with shop.</div></div>
+    <div class="must"><div class="title">Boss Fights ×2</div><div class="desc">Two finished bosses with phases and rewards.</div></div>
+    <div class="must"><div class="title">Tutorial</div><div class="desc">~3-4 min onboarding covering combat + class basics.</div></div>
+    <div class="must"><div class="title">Maps ×2</div><div class="desc">Explorable hub + combat arena.</div></div>
+    <div class="must"><div class="title">Monetization</div><div class="desc">Cosmetics + XP boosters (no pay-to-win).</div></div>
+  </div>
+
+  <h2>Workload by Developer Role</h2>
+  <div class="role-grid" id="roleGrid"></div>
+
+  <h2>Workload by Phase</h2>
+  <table>
+    <thead><tr><th>Phase</th><th>Window</th><th>Big-Item Count</th></tr></thead>
+    <tbody>
+      <tr><td>1 — Polish</td><td>6 weeks</td><td class="count">7</td></tr>
+      <tr><td>2 — Content</td><td>22 weeks</td><td class="count">23</td></tr>
+      <tr><td>3 — Polish/QA</td><td>2 weeks</td><td class="count">5</td></tr>
+      <tr><td>4 — Beta</td><td>1 week</td><td class="count">4</td></tr>
+      <tr><td>5 — Live ops</td><td>13 weeks</td><td class="count">ongoing</td></tr>
+    </tbody>
+  </table>
+
+  <div class="footnote">
+    <span class="risk">Notes:</span>
+    Phase 2 is now 22 items in 22 weeks — averages 1 item/week.
+    The three sub-classes (Ninja, Gunsmith, Grappler) and Blacksmith are the riskiest items; each can swallow 2-3 weeks alone if scope creeps.
+    If you fall behind by mid-October, drop Boss 2 + Map 2 to post-EA before scoping down any class.
+    Tasks auto-save in browser localStorage. Click anywhere on a phase header to expand/collapse.
+  </div>
+
+<script>
+// =========================================================
+// FIREBASE CONFIG — paste your config here to enable team sync.
+// Setup steps are at the bottom of this file in a comment.
+// =========================================================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBaTWC4tJBhTx3crxYV4_1CQCFjE_YWqLQ",
+  authDomain: "slayers-retribution-roadmap.firebaseapp.com",
+  databaseURL: "https://slayers-retribution-roadmap-default-rtdb.firebaseio.com",
+  projectId: "slayers-retribution-roadmap",
+  storageBucket: "slayers-retribution-roadmap.firebasestorage.app",
+  messagingSenderId: "356525254276",
+  appId: "1:356525254276:web:c46cfdbb266970bd5a04d1",
+};
+// =========================================================
+
+let firebaseEnabled = false;
+let fbDb = null;
+
+(function tryInitFirebase() {
+  if (!FIREBASE_CONFIG.databaseURL) return; // not configured
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    fbDb = firebase.database();
+    firebaseEnabled = true;
+  } catch (e) {
+    console.warn('Firebase init failed:', e);
+  }
+})();
+
+const STORAGE_PREFIX = 'sr_roadmap_tasks_v3_';
+const USER_KEY = 'sr_roadmap_currentUser_v1';
+let state = {};
+let currentUser = null; // { name, role }
+let mineOnly = false;
+let teamState = {}; // { username: { name, role, tasks: { key: true } } } — populated from Firebase
+
+function userId() {
+  if (!currentUser) return '_anon';
+  return currentUser.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+}
+function storageKeyForUser() { return STORAGE_PREFIX + userId(); }
+
+function loadState() {
+  try {
+    currentUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+  } catch (e) { currentUser = null; }
+  try { state = JSON.parse(localStorage.getItem(storageKeyForUser()) || '{}'); } catch (e) { state = {}; }
+}
+function saveState() {
+  try { localStorage.setItem(storageKeyForUser(), JSON.stringify(state)); } catch (e) {}
+  if (firebaseEnabled && currentUser) {
+    fbDb.ref('roadmap/users/' + userId()).set({
+      name: currentUser.name,
+      role: currentUser.role,
+      tasks: state,
+      lastUpdated: Date.now(),
+    }).catch(e => console.warn('Firebase write failed:', e));
+  }
+}
+
+function subscribeFirebase() {
+  if (!firebaseEnabled) return;
+  fbDb.ref('roadmap/users').on('value', snap => {
+    const data = snap.val() || {};
+    teamState = data;
+    // If our user's tasks were updated remotely, pull them in (in case of multi-device use)
+    if (currentUser && data[userId()]) {
+      const remote = data[userId()].tasks || {};
+      // Merge: trust remote as source of truth when it differs
+      const localKeys = Object.keys(state);
+      const remoteKeys = Object.keys(remote);
+      const keysDiffer = localKeys.length !== remoteKeys.length ||
+        localKeys.some(k => state[k] !== remote[k]);
+      if (keysDiffer) {
+        state = remote;
+        try { localStorage.setItem(storageKeyForUser(), JSON.stringify(state)); } catch (e) {}
+        refreshGlobal();
+      }
+    }
+    renderTeamGrid();
+  });
+}
+
+function renderSyncBadge() {
+  const b = document.getElementById('syncBadge');
+  if (firebaseEnabled) {
+    b.classList.add('online');
+    b.classList.remove('offline');
+    b.textContent = 'Synced';
+    b.title = 'Team sync active — changes save to Firebase';
+  } else {
+    b.classList.add('offline');
+    b.classList.remove('online');
+    b.textContent = 'Offline';
+    b.title = 'Firebase config missing — running in local-only mode. Paste config in source to enable team sync.';
+  }
+}
+
+function renderTeamGrid() {
+  const grid = document.getElementById('teamGrid');
+  if (!firebaseEnabled) {
+    grid.innerHTML = '<div style="color: var(--muted); font-size: 13px;">Firebase not configured yet — team progress is local-only. See setup instructions at the bottom of the source file.</div>';
+    return;
+  }
+  const users = Object.values(teamState || {});
+  if (users.length === 0) {
+    grid.innerHTML = '<div style="color: var(--muted); font-size: 13px;">No team members signed in yet. Share the URL.</div>';
+    return;
+  }
+  // Compute total task count once
+  let totalTasks = 0;
+  document.querySelectorAll('.phase:not([data-phase="5"]) .task-list li').forEach(() => totalTasks++);
+  grid.innerHTML = '';
+  users.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  users.forEach(u => {
+    const tasks = u.tasks || {};
+    let done = 0;
+    Object.keys(tasks).forEach(k => {
+      if (tasks[k] && !k.startsWith('5:')) done++;
+    });
+    const pct = totalTasks ? Math.round((done / totalTasks) * 100) : 0;
+    const card = document.createElement('div');
+    card.className = 'team-card';
+    const initial = (u.name || '?').charAt(0).toUpperCase();
+    const roleLabel = (ROLES[u.role] || { label: u.role || 'Role' }).label;
+    card.innerHTML = `
+      <div class="team-head">
+        <div class="team-avatar">${initial}</div>
+        <div class="team-meta">
+          <div class="team-name">${u.name || 'Unnamed'}</div>
+          <div class="team-role">${roleLabel}</div>
+        </div>
+        <div class="team-pct">${pct}%</div>
+      </div>
+      <div class="team-bar"><div class="team-bar-fill" style="width: ${pct}%"></div></div>
+    `;
+    grid.appendChild(card);
+  });
+}
+function taskKey(phaseEl, idx) { return phaseEl.dataset.phase + ':' + idx; }
+
+function refreshPhase(phaseEl) {
+  const items = phaseEl.querySelectorAll('.task-list li');
+  let done = 0;
+  items.forEach((li, idx) => {
+    const key = taskKey(phaseEl, idx);
+    if (state[key]) { li.classList.add('done'); done++; }
+    else { li.classList.remove('done'); }
+  });
+  const total = items.length;
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+  phaseEl.querySelector('.mini-fill').style.width = pct + '%';
+  phaseEl.querySelector('.completion').textContent = done + ' / ' + total;
+  if (done === total && total > 0) phaseEl.classList.add('complete'); else phaseEl.classList.remove('complete');
+}
+
+function refreshGlobal() {
+  let allItems = 0, allDone = 0;
+  document.querySelectorAll('.phase').forEach(p => {
+    const items = p.querySelectorAll('.task-list li');
+    items.forEach((li, idx) => { allItems++; if (state[taskKey(p, idx)]) allDone++; });
+    refreshPhase(p);
+  });
+  const pct = allItems === 0 ? 0 : Math.round((allDone / allItems) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% (' + allDone + ' / ' + allItems + ')';
+}
+
+function togglePhase(headEl) { headEl.parentElement.classList.toggle('open'); }
+function expandAll(open) { document.querySelectorAll('.phase').forEach(p => { if (open) p.classList.add('open'); else p.classList.remove('open'); }); }
+function resetAll() { if (!confirm('Reset all task progress?')) return; state = {}; saveState(); refreshGlobal(); }
+
+function parsePhaseDays(phaseEl) {
+  // Pulls "YYYY-MM-DD → YYYY-MM-DD · N weeks" out of .dates and returns day-span
+  const txt = phaseEl.querySelector('.dates').textContent;
+  const m = txt.match(/(\d{4}-\d{2}-\d{2})\s*[→\->]+\s*(\d{4}-\d{2}-\d{2})/);
+  if (!m) return null;
+  const start = new Date(m[1] + 'T00:00:00');
+  const end = new Date(m[2] + 'T00:00:00');
+  return Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)));
+}
+
+function fmtBudget(days) {
+  if (days < 7) {
+    const rounded = days < 1 ? '< 1' : (days < 2 ? '1' : Math.round(days));
+    return rounded + ' day' + (rounded === '1' || rounded === '< 1' ? '' : 's');
+  }
+  const weeks = days / 7;
+  if (weeks < 2) return Math.round(weeks * 10) / 10 + ' wks';
+  return Math.round(weeks) + ' wks';
+}
+
+function addBudgets() {
+  document.querySelectorAll('.phase').forEach(p => {
+    const days = parsePhaseDays(p);
+    if (!days) return;
+    const items = p.querySelectorAll('.task-list li');
+    const count = items.length;
+    if (count === 0) return;
+    const perTask = days / count;
+    const pctOfPhase = Math.round((1 / count) * 100);
+    items.forEach(li => {
+      if (li.querySelector('.budget')) return;
+      const badge = document.createElement('div');
+      badge.className = 'budget';
+      badge.title = 'Phase = ' + days + ' days / ' + count + ' tasks · this task ≈ ' + perTask.toFixed(1) + ' days (' + pctOfPhase + '% of phase)';
+      badge.innerHTML = '~' + fmtBudget(perTask) + '<span class="pctline">' + pctOfPhase + '% of phase</span>';
+      li.appendChild(badge);
+    });
+  });
+}
+
+function setupTasks() {
+  document.querySelectorAll('.phase').forEach(p => {
+    const items = p.querySelectorAll('.task-list li');
+    items.forEach((li, idx) => {
+      li.addEventListener('click', (e) => {
+        // Don't toggle when clicking the budget badge (avoid accidental ticks while reading)
+        if (e.target.closest('.budget')) return;
+        const key = taskKey(p, idx);
+        state[key] = !state[key];
+        saveState();
+        refreshGlobal();
+      });
+    });
+  });
+}
+
+function setupCountdowns() {
+  const today = new Date();
+  const ea = new Date('2026-12-15');
+  const rel = new Date('2027-03-15');
+  function fmt(target) {
+    const days = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+    if (days <= 0) return 'LIVE';
+    return days + ' days from today';
+  }
+  document.getElementById('eaCountdown').textContent = fmt(ea);
+  document.getElementById('releaseCountdown').textContent = fmt(rel);
+}
+
+// --- Role system ---
+const ROLES = {
+  script: { label: 'Scripter', short: 'Script', cls: 'role-script' },
+  design: { label: 'Game Designer', short: 'Design', cls: 'role-design' },
+  anim:   { label: 'Animator', short: 'Anim', cls: 'role-anim' },
+  model:  { label: 'Modeler', short: 'Model', cls: 'role-model' },
+  env:    { label: 'Environment Artist', short: 'Env', cls: 'role-env' },
+  ui:     { label: 'UI Artist', short: 'UI', cls: 'role-ui' },
+  vfx:    { label: 'VFX Artist', short: 'VFX', cls: 'role-vfx' },
+  sound:  { label: 'Sound Designer', short: 'Sound', cls: 'role-sound' },
+  music:  { label: 'Composer', short: 'Music', cls: 'role-music' },
+  qa:     { label: 'QA / Tester', short: 'QA', cls: 'role-qa' },
+  comm:   { label: 'Community / Marketing', short: 'Comm', cls: 'role-comm' },
+};
+
+// Per-phase role assignments. First role = primary owner; others = supporting.
+const ROLE_MAP = {
+  // Phase 1
+  '1:0': ['script', 'design'],         // Combat tuning
+  '1:1': ['script'],                    // Anti-exploit
+  '1:2': ['script'],                    // Datastore
+  '1:3': ['script', 'env'],             // Perf pass
+  '1:4': ['script', 'qa'],              // Bug pass
+  '1:5': ['script'],                    // Save/load
+  '1:6': ['ui', 'script'],              // HUD polish
+
+  // Phase 2
+  '2:0':  ['script', 'design'],                      // Sub-class framework
+  '2:1':  ['design', 'script', 'anim'],              // Samurai finalize
+  '2:2':  ['script', 'anim', 'vfx', 'design'],       // Ninja
+  '2:3':  ['script', 'anim', 'model', 'vfx'],        // Gunsmith
+  '2:4':  ['script', 'anim', 'design'],              // Grappler
+  '2:5':  ['script', 'anim', 'model'],               // Horse / mount
+  '2:6':  ['script', 'ui', 'model'],                 // Blacksmith
+  '2:7':  ['script', 'ui'],                          // Bind manager
+  '2:8':  ['script', 'design'],                      // Progression
+  '2:9':  ['script', 'design'],                      // Currency
+  '2:10': ['script', 'ui', 'model'],                 // Customization
+  '2:11': ['ui', 'script'],                          // Cosmetic shop UI
+  '2:12': ['script', 'ui'],                          // XP booster pass
+  '2:13': ['env', 'model'],                          // Map 1
+  '2:14': ['env'],                                   // Map 2
+  '2:15': ['design', 'script', 'anim', 'model', 'vfx'], // Boss 1
+  '2:16': ['design', 'script', 'anim', 'model', 'vfx'], // Boss 2
+  '2:17': ['design', 'script', 'ui'],                // Tutorial
+  '2:18': ['sound'],                                 // Sound design
+  '2:19': ['music'],                                 // Music
+  '2:20': ['ui', 'script'],                          // Main menu/character select
+  '2:21': ['vfx'],                                   // VFX polish
+  '2:22': ['script', 'ui'],                          // Friend/party + leaderboard
+
+  // Phase 3
+  '3:0': ['qa', 'script'],                  // Bug bash
+  '3:1': ['script', 'env'],                 // Perf opt
+  '3:2': ['ui', 'script'],                  // Final UI polish
+  '3:3': ['design', 'ui', 'script'],        // Onboarding tightening
+  '3:4': ['ui', 'design'],                  // Marketing materials
+
+  // Phase 4
+  '4:0': ['comm'],                          // Invite testers
+  '4:1': ['script'],                        // Telemetry
+  '4:2': ['script', 'qa'],                  // Daily bug triage
+  '4:3': ['comm'],                          // Creator outreach
+
+  // Phase 5
+  '5:0': ['script', 'design'],                                     // Weekly patches
+  '5:1': ['design', 'script', 'anim', 'model', 'vfx'],            // New boss
+  '5:2': ['script', 'anim', 'vfx', 'design'],                     // New breathing/combat art
+  '5:3': ['design', 'script'],                                     // Class balance
+  '5:4': ['design', 'script', 'anim'],                             // 5th sub-class preview
+  '5:5': ['ui', 'model'],                                          // Season 1 cosmetics
+  '5:6': ['comm', 'design'],                                       // Public roadmap
+};
+
+let currentRoleFilter = 'all';
+
+function addRoleTagsAndBuildGrid() {
+  const grid = document.getElementById('roleGrid');
+  const roleData = {}; // role -> [{ phaseLabel, idx, text, done }]
+
+  document.querySelectorAll('.phase').forEach(p => {
+    const phaseNum = p.dataset.phase;
+    const items = p.querySelectorAll('.task-list li');
+    items.forEach((li, idx) => {
+      const key = phaseNum + ':' + idx;
+      const rolesForTask = ROLE_MAP[key] || [];
+      if (rolesForTask.length === 0) return;
+
+      // Add inline role badges on the task
+      const container = document.createElement('div');
+      container.className = 'roles';
+      rolesForTask.forEach(rk => {
+        const info = ROLES[rk];
+        if (!info) return;
+        const tag = document.createElement('span');
+        tag.className = 'role-tag ' + info.cls;
+        tag.textContent = info.short;
+        tag.title = info.label;
+        container.appendChild(tag);
+      });
+      li.appendChild(container);
+
+      // Store data attribute for filtering
+      li.dataset.roles = rolesForTask.join(',');
+
+      // Collect for the role grid (use the .text element's first text node only)
+      const textEl = li.querySelector('.text');
+      const headText = textEl ? (textEl.childNodes[0] ? textEl.childNodes[0].textContent.trim() : textEl.textContent.trim()) : '';
+      rolesForTask.forEach(rk => {
+        if (!roleData[rk]) roleData[rk] = [];
+        roleData[rk].push({ phase: phaseNum, idx, text: headText, key });
+      });
+    });
+  });
+
+  // Render the role grid
+  grid.innerHTML = '';
+  Object.keys(ROLES).forEach(rk => {
+    const tasks = roleData[rk] || [];
+    if (tasks.length === 0) return;
+    const card = document.createElement('div');
+    card.className = 'role-card';
+    card.innerHTML = `
+      <div class="role-head">
+        <div class="role-name"><span class="role-tag ${ROLES[rk].cls}">${ROLES[rk].short}</span> ${ROLES[rk].label}</div>
+        <div class="role-count">${tasks.length} task${tasks.length === 1 ? '' : 's'}</div>
+      </div>
+      <ul></ul>
+    `;
+    const ul = card.querySelector('ul');
+    tasks.forEach(t => {
+      const li = document.createElement('li');
+      li.dataset.taskKey = t.key;
+      li.innerHTML = `<span class="phase-ref">P${t.phase}</span><span>${t.text}</span>`;
+      ul.appendChild(li);
+    });
+    grid.appendChild(card);
+  });
+}
+
+function refreshRoleCardStrike() {
+  document.querySelectorAll('.role-card li').forEach(li => {
+    if (state[li.dataset.taskKey]) li.classList.add('done'); else li.classList.remove('done');
+  });
+}
+
+function applyRoleFilter(roleKey) {
+  currentRoleFilter = roleKey;
+  document.querySelectorAll('#filterRow .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.role === roleKey));
+  document.querySelectorAll('.task-list li').forEach(li => {
+    if (roleKey === 'all') li.classList.remove('hidden');
+    else {
+      const r = li.dataset.roles || '';
+      li.classList.toggle('hidden', r.split(',').indexOf(roleKey) === -1);
+    }
+  });
+}
+
+function buildFilterRow() {
+  const row = document.getElementById('filterRow');
+  const mkBtn = (key, label, cls) => {
+    const b = document.createElement('button');
+    b.className = 'filter-btn' + (key === 'all' ? ' active' : '');
+    b.dataset.role = key;
+    b.textContent = label;
+    if (cls) b.classList.add(cls);
+    b.addEventListener('click', () => applyRoleFilter(key));
+    return b;
+  };
+  row.appendChild(mkBtn('all', 'All'));
+  Object.keys(ROLES).forEach(rk => row.appendChild(mkBtn(rk, ROLES[rk].label, ROLES[rk].cls)));
+}
+
+const _origRefreshGlobal = refreshGlobal;
+refreshGlobal = function () {
+  _origRefreshGlobal();
+  refreshRoleCardStrike();
+};
+
+// --- Pace & accountability ---
+const LOG_KEY = 'hawkn_roadmap_log_v1';
+const STREAK_KEY = 'hawkn_roadmap_streak_v1';
+let logEntries = [];
+let streakData = { last: null, days: 0 };
+
+function loadLog() {
+  try { logEntries = JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch (e) { logEntries = []; }
+  try { streakData = JSON.parse(localStorage.getItem(STREAK_KEY) || '{}'); } catch (e) {}
+  if (!streakData || typeof streakData !== 'object') streakData = { last: null, days: 0 };
+}
+function saveLog() {
+  try { localStorage.setItem(LOG_KEY, JSON.stringify(logEntries)); } catch (e) {}
+  try { localStorage.setItem(STREAK_KEY, JSON.stringify(streakData)); } catch (e) {}
+}
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function dateAtStartOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function daysBetween(a, b) { return Math.round((dateAtStartOfDay(b) - dateAtStartOfDay(a)) / (1000*60*60*24)); }
+
+// Phase date map (parsed from .dates strings)
+function getPhaseRanges() {
+  const ranges = [];
+  document.querySelectorAll('.phase').forEach(p => {
+    const m = p.querySelector('.dates').textContent.match(/(\d{4}-\d{2}-\d{2})\s*[→\->]+\s*(\d{4}-\d{2}-\d{2})/);
+    if (m) {
+      ranges.push({
+        phaseEl: p,
+        phaseNum: p.dataset.phase,
+        start: new Date(m[1] + 'T00:00:00'),
+        end: new Date(m[2] + 'T00:00:00'),
+        tasks: p.querySelectorAll('.task-list li').length,
+      });
+    }
+  });
+  return ranges;
+}
+
+// Overall roadmap timeline (Phase 1 start → EA target = launch box date 2026-12-15)
+const TIMELINE_START = new Date('2026-05-11T00:00:00');
+const EA_DATE = new Date('2026-12-15T00:00:00');
+
+function computeTargetPercent() {
+  const today = new Date();
+  const total = daysBetween(TIMELINE_START, EA_DATE);
+  const done = daysBetween(TIMELINE_START, today);
+  return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+}
+
+function computeActualPercent() {
+  let allItems = 0, allDone = 0;
+  document.querySelectorAll('.phase:not([data-phase="5"]) .task-list li').forEach((li, _, _arr) => {
+    allItems++;
+  });
+  document.querySelectorAll('.phase:not([data-phase="5"])').forEach(p => {
+    const items = p.querySelectorAll('.task-list li');
+    items.forEach((li, idx) => { if (state[taskKey(p, idx)]) allDone++; });
+  });
+  if (allItems === 0) return 0;
+  return Math.round((allDone / allItems) * 100);
+}
+
+function classifyPace(actual, target) {
+  const delta = actual - target;
+  if (delta >= 5) return { tone: 'green', label: 'AHEAD' };
+  if (delta >= -5) return { tone: 'yellow', label: 'ON TRACK' };
+  if (delta >= -15) return { tone: 'yellow', label: 'SLIGHTLY BEHIND' };
+  return { tone: 'red', label: 'BEHIND' };
+}
+
+function refreshPaceTracker() {
+  const target = computeTargetPercent();
+  const actual = computeActualPercent();
+  const delta = actual - target;
+  const today = new Date();
+  const total = daysBetween(TIMELINE_START, EA_DATE);
+  const done = daysBetween(TIMELINE_START, today);
+  document.getElementById('dayNum').textContent = 'Day ' + Math.max(0, done) + ' of ' + total + ' until EA';
+
+  document.getElementById('paceFill').style.width = actual + '%';
+  document.getElementById('paceTarget').style.left = target + '%';
+  document.getElementById('paceTargetLabel').textContent = target + '% target';
+
+  const statTarget = document.getElementById('statTarget');
+  const statActual = document.getElementById('statActual');
+  const statDelta = document.getElementById('statDelta');
+  statTarget.querySelector('.stat-value').textContent = target + '%';
+  statActual.querySelector('.stat-value').textContent = actual + '%';
+  const deltaStr = (delta > 0 ? '+' : '') + delta + '%';
+  statDelta.querySelector('.stat-value').textContent = deltaStr;
+  statDelta.classList.remove('green', 'yellow', 'red');
+  if (delta >= 5) statDelta.classList.add('green');
+  else if (delta >= -5) statDelta.classList.add('yellow');
+  else statDelta.classList.add('red');
+
+  const pace = classifyPace(actual, target);
+  const msgEl = document.getElementById('paceMessage');
+  msgEl.classList.remove('green', 'yellow', 'red');
+  msgEl.classList.add(pace.tone);
+  let msg;
+  if (delta >= 10) msg = `🔥 Ahead of schedule. You have ${Math.abs(delta)}% of buffer — keep momentum.`;
+  else if (delta >= 0) msg = `Right on pace. Stay consistent — daily task wins compound.`;
+  else if (delta >= -10) msg = `Slipping ${Math.abs(delta)}%. Pick up 1-2 extra tasks this week to catch up.`;
+  else msg = `Behind by ${Math.abs(delta)}%. Decision time: drop scope (Boss 2 / Map 2 first) or push EA out.`;
+  msgEl.textContent = msg;
+}
+
+// Per-phase pace badge
+function refreshPhasePaceBadges() {
+  const today = new Date();
+  getPhaseRanges().forEach(r => {
+    if (r.phaseNum === '5') return; // post-EA
+    let badge = r.phaseEl.querySelector('.pace-badge');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'pace-badge';
+      r.phaseEl.querySelector('.head-right').insertBefore(badge, r.phaseEl.querySelector('.mini-bar'));
+    }
+    badge.classList.remove('ahead','ontrack','behind','late','upcoming','done');
+
+    // compute % time elapsed in phase
+    let timePct = 0;
+    if (today < r.start) timePct = -1;
+    else if (today >= r.end) timePct = 100;
+    else timePct = ((today - r.start) / (r.end - r.start)) * 100;
+
+    let donePct = 0;
+    const items = r.phaseEl.querySelectorAll('.task-list li');
+    if (items.length > 0) {
+      let d = 0;
+      items.forEach((li, idx) => { if (state[taskKey(r.phaseEl, idx)]) d++; });
+      donePct = (d / items.length) * 100;
+    }
+
+    if (timePct < 0) {
+      badge.classList.add('upcoming');
+      const daysToStart = daysBetween(today, r.start);
+      badge.textContent = 'Starts in ' + daysToStart + 'd';
+    } else if (donePct >= 100) {
+      badge.classList.add('done');
+      badge.textContent = 'Done ✓';
+    } else {
+      const delta = donePct - timePct;
+      if (delta >= 5) {
+        badge.classList.add('ahead');
+        badge.textContent = 'Ahead +' + Math.round(delta) + '%';
+      } else if (delta >= -5) {
+        badge.classList.add('ontrack');
+        badge.textContent = 'On track';
+      } else if (delta >= -20) {
+        badge.classList.add('behind');
+        badge.textContent = 'Behind ' + Math.round(-delta) + '%';
+      } else {
+        badge.classList.add('late');
+        badge.textContent = 'Late ' + Math.round(-delta) + '%';
+      }
+    }
+  });
+}
+
+// This week's focus: pull the first 5 uncompleted tasks from the current active phase
+function refreshFocus() {
+  const today = new Date();
+  let activePhase = null;
+  getPhaseRanges().forEach(r => {
+    if (!activePhase && today >= r.start && today < r.end) activePhase = r;
+  });
+  if (!activePhase) {
+    // Find the next upcoming phase
+    getPhaseRanges().forEach(r => {
+      if (!activePhase && today < r.start) activePhase = r;
+    });
+  }
+  const ul = document.getElementById('focusList');
+  ul.innerHTML = '';
+  if (!activePhase) {
+    ul.innerHTML = '<li class="focus-text" style="color: var(--muted)">No active phase.</li>';
+    return;
+  }
+  const items = activePhase.phaseEl.querySelectorAll('.task-list li');
+  let added = 0;
+  items.forEach((li, idx) => {
+    if (added >= 5) return;
+    const key = taskKey(activePhase.phaseEl, idx);
+    if (state[key]) return;
+    const text = (li.querySelector('.text').childNodes[0] ? li.querySelector('.text').childNodes[0].textContent.trim() : '');
+    const f = document.createElement('li');
+    f.innerHTML = `<div class="focus-check"></div><span class="focus-text">${text}</span><span class="focus-phase">P${activePhase.phaseNum}</span>`;
+    f.addEventListener('click', () => {
+      state[key] = !state[key];
+      saveState();
+      refreshGlobal();
+    });
+    ul.appendChild(f);
+    added++;
+  });
+  if (added === 0) {
+    ul.innerHTML = '<li class="focus-text" style="color: var(--green)">All current-phase tasks complete. Pick up early items from the next phase.</li>';
+  }
+}
+
+function refreshFocusStrike() {
+  // Sync done state visually for focus list
+  const activePhase = (function () {
+    const today = new Date();
+    let r = null;
+    getPhaseRanges().forEach(x => { if (!r && today >= x.start && today < x.end) r = x; });
+    return r;
+  })();
+  if (!activePhase) return;
+  const items = activePhase.phaseEl.querySelectorAll('.task-list li');
+  document.querySelectorAll('#focusList li').forEach((focusLi, i) => {
+    // recompute by matching text
+    const focusText = focusLi.querySelector('.focus-text') ? focusLi.querySelector('.focus-text').textContent.trim() : '';
+    items.forEach((li, idx) => {
+      const text = (li.querySelector('.text').childNodes[0] ? li.querySelector('.text').childNodes[0].textContent.trim() : '');
+      if (text === focusText) {
+        if (state[taskKey(activePhase.phaseEl, idx)]) focusLi.classList.add('done');
+        else focusLi.classList.remove('done');
+      }
+    });
+  });
+}
+
+// Streak management
+function tickStreak() {
+  const t = todayStr();
+  if (streakData.last === t) return;
+  if (streakData.last) {
+    const last = new Date(streakData.last + 'T00:00:00');
+    const today = new Date(t + 'T00:00:00');
+    const diff = Math.round((today - last) / (1000*60*60*24));
+    if (diff === 1) streakData.days += 1;
+    else if (diff > 1) streakData.days = 1;
+  } else {
+    streakData.days = 1;
+  }
+  streakData.last = t;
+  saveLog();
+}
+function renderStreak() {
+  document.getElementById('streakNum').textContent = streakData.days || 0;
+}
+function renderLog() {
+  const list = document.getElementById('logList');
+  list.innerHTML = '';
+  const recent = logEntries.slice(-10).reverse();
+  recent.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    div.innerHTML = `<span class="log-date">${e.date}</span><span class="log-text">${e.text}</span>`;
+    list.appendChild(div);
+  });
+}
+function setupLogInput() {
+  const input = document.getElementById('logInput');
+  input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const v = input.value.trim();
+    if (!v) return;
+    logEntries.push({ date: todayStr(), text: v });
+    tickStreak();
+    saveLog();
+    input.value = '';
+    renderLog();
+    renderStreak();
+  });
+}
+
+// Wrap refreshGlobal to also update pace + focus + per-phase badges
+const _origRefreshGlobal2 = refreshGlobal;
+refreshGlobal = function () {
+  _origRefreshGlobal2();
+  refreshPaceTracker();
+  refreshPhasePaceBadges();
+  refreshFocusStrike();
+};
+
+// --- Multi-user ---
+function fillRoleDropdown() {
+  const sel = document.getElementById('userRoleInput');
+  Object.keys(ROLES).forEach(rk => {
+    const opt = document.createElement('option');
+    opt.value = rk;
+    opt.textContent = ROLES[rk].label;
+    sel.appendChild(opt);
+  });
+}
+
+function signIn() {
+  const name = document.getElementById('userNameInput').value.trim();
+  const role = document.getElementById('userRoleInput').value;
+  if (!name) { alert('Enter your name'); return; }
+  if (!role) { alert('Pick your role'); return; }
+  currentUser = { name, role };
+  localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+  try { state = JSON.parse(localStorage.getItem(storageKeyForUser()) || '{}'); } catch (e) { state = {}; }
+  renderUserPanel();
+  refreshGlobal();
+  refreshOwnership();
+}
+
+function signOut() {
+  currentUser = null;
+  state = {};
+  localStorage.removeItem(USER_KEY);
+  renderUserPanel();
+  refreshGlobal();
+  refreshOwnership();
+  applyMineFilter();
+}
+
+function renderUserPanel() {
+  const av = document.getElementById('userAvatar');
+  const nameEl = document.getElementById('userName');
+  const roleEl = document.getElementById('userRole');
+  if (!currentUser) {
+    av.textContent = '?';
+    av.style.background = 'var(--card-2)';
+    av.style.color = 'var(--muted)';
+    nameEl.textContent = 'Not signed in';
+    roleEl.textContent = 'Sign in below to track your tasks';
+    return;
+  }
+  av.textContent = currentUser.name.charAt(0).toUpperCase();
+  av.style.background = 'var(--gold)';
+  av.style.color = '#1a1408';
+  nameEl.textContent = currentUser.name;
+  roleEl.textContent = (ROLES[currentUser.role] || { label: currentUser.role }).label;
+}
+
+function refreshOwnership() {
+  document.querySelectorAll('.task-list li').forEach(li => {
+    const roles = (li.dataset.roles || '').split(',');
+    if (currentUser && roles.indexOf(currentUser.role) !== -1) {
+      li.classList.add('ownership-mine');
+    } else {
+      li.classList.remove('ownership-mine');
+    }
+  });
+}
+
+function toggleMineOnly() {
+  mineOnly = !mineOnly;
+  document.getElementById('mineToggle').classList.toggle('on', mineOnly);
+  applyMineFilter();
+}
+
+function applyMineFilter() {
+  if (!mineOnly || !currentUser) {
+    document.querySelectorAll('.task-list li').forEach(li => li.classList.remove('hidden-mine'));
+    document.querySelectorAll('.task-list li.hidden-mine-only').forEach(li => li.classList.remove('hidden'));
+    // restore role filter
+    applyRoleFilter(currentRoleFilter);
+    return;
+  }
+  document.querySelectorAll('.task-list li').forEach(li => {
+    const roles = (li.dataset.roles || '').split(',');
+    const isMine = roles.indexOf(currentUser.role) !== -1;
+    if (!isMine) li.classList.add('hidden'); else li.classList.remove('hidden');
+  });
+}
+
+const _origRefreshGlobal3 = refreshGlobal;
+refreshGlobal = function () {
+  _origRefreshGlobal3();
+  refreshOwnership();
+};
+
+loadState();
+loadLog();
+fillRoleDropdown();
+renderUserPanel();
+renderSyncBadge();
+setupTasks();
+setupCountdowns();
+addBudgets();
+addRoleTagsAndBuildGrid();
+buildFilterRow();
+setupLogInput();
+renderStreak();
+renderLog();
+refreshFocus();
+refreshGlobal();
+refreshOwnership();
+subscribeFirebase();
+document.querySelector('.phase[data-phase="1"]').classList.add('open');
+
+/* ===========================================================
+   FIREBASE TEAM-SYNC SETUP — one-time
+
+   1. Go to https://console.firebase.google.com → "Add project".
+      Name it (e.g. "slayers-roadmap"). Disable Google Analytics. Click Create.
+
+   2. Once the project is ready, sidebar → "Build" → "Realtime Database"
+      → "Create database" → pick a location → "Start in test mode" (allows read/write for 30 days).
+
+   3. Sidebar → "Project Overview" (top) → click the </> (Web app) icon
+      → register the app any name → it shows you the firebaseConfig object.
+
+   4. Copy ONLY the keys/values from that object, paste them into FIREBASE_CONFIG
+      at the top of this <script> block above.
+
+   5. Save the file, reload. The sync badge should turn green → "Synced".
+      Each signed-in team member's progress now syncs in real time.
+
+   6. SECURITY: Test mode expires in 30 days. Before then, go to
+      Realtime Database → Rules and replace with something like:
+
+      {
+        "rules": {
+          "roadmap": {
+            ".read": true,
+            ".write": true
+          }
+        }
+      }
+
+      (This is open. If you want it locked to your team only, add an auth layer
+      — happy to set that up if needed.)
+   =========================================================== */
+</script>
+</body>
+</html>
