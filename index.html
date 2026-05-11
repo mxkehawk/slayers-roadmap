@@ -466,6 +466,64 @@
   body.locked > *:not(#gate) { filter: blur(10px); pointer-events: none; }
   body.unlocked #gate { display: none; }
 
+  /* References */
+  .ref-toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    margin: 12px 0;
+  }
+  .ref-toolbar select, .ref-toolbar input {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 10px; color: var(--text);
+    font-size: 13px; font-family: inherit;
+  }
+  .ref-toolbar input:focus, .ref-toolbar select:focus { outline: none; border-color: var(--gold-soft); }
+  .ref-add-row { display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 8px; margin-bottom: 14px; }
+  .ref-add-row input, .ref-add-row select {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 12px; color: var(--text);
+    font-size: 13px; font-family: inherit;
+  }
+  .ref-add-row button {
+    background: var(--gold); color: #1a1408; border: none;
+    border-radius: 8px; padding: 8px 16px; font-size: 12px;
+    font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .ref-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+  }
+  .ref-card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .ref-card:hover { border-color: var(--gold-soft); transform: translateY(-2px); }
+  .ref-media { width: 100%; aspect-ratio: 16/9; background: var(--card-2); overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; }
+  .ref-media img { width: 100%; height: 100%; object-fit: cover; }
+  .ref-media iframe { width: 100%; height: 100%; border: none; }
+  .ref-media .link-fallback {
+    text-align: center; padding: 16px; color: var(--muted); font-size: 12px;
+    word-break: break-all;
+  }
+  .ref-media .link-fallback a { color: var(--gold); text-decoration: none; }
+  .ref-card .ref-meta { padding: 10px 14px; font-size: 12px; }
+  .ref-card .ref-cat {
+    display: inline-block; font-size: 10px; padding: 2px 8px;
+    border-radius: 999px; border: 1px solid var(--gold-soft);
+    color: var(--gold); text-transform: uppercase; letter-spacing: 0.4px;
+    margin-bottom: 6px;
+  }
+  .ref-card .ref-caption { font-size: 13px; color: var(--text); margin-bottom: 6px; line-height: 1.4; }
+  .ref-card .ref-foot { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 11px; }
+  .ref-card .ref-author { font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .ref-card .ref-delete { background: none; border: none; color: var(--muted); cursor: pointer; padding: 0; font-size: 12px; opacity: 0; transition: opacity 0.15s; }
+  .ref-card:hover .ref-delete { opacity: 1; }
+  .ref-card .ref-delete:hover { color: var(--accent); }
+  .ref-empty { color: var(--muted); font-size: 13px; padding: 20px 0; text-align: center; }
+
   @page { size: A4; margin: 14mm; }
   @media print {
     body { background: white; color: #1a1a1a; padding: 0; max-width: 100%; }
@@ -780,6 +838,34 @@
     <div class="must"><div class="title">Maps ×2</div><div class="desc">Explorable hub + combat arena.</div></div>
     <div class="must"><div class="title">Monetization</div><div class="desc">Cosmetics + XP boosters (no pay-to-win).</div></div>
   </div>
+
+  <h2>References &amp; Mood Board</h2>
+  <div class="ref-add-row">
+    <input id="refUrl" placeholder="Paste image URL, YouTube URL, or any link" />
+    <input id="refCaption" placeholder="Caption (what is this?)" />
+    <select id="refCategory">
+      <option value="Combat">Combat</option>
+      <option value="Art Style">Art Style</option>
+      <option value="UI / UX">UI / UX</option>
+      <option value="Animation">Animation</option>
+      <option value="Sound / Music">Sound / Music</option>
+      <option value="Environment">Environment</option>
+      <option value="Boss / Enemy">Boss / Enemy</option>
+      <option value="VFX">VFX</option>
+      <option value="Other">Other</option>
+    </select>
+    <button onclick="addReference()">Add</button>
+  </div>
+  <div class="ref-toolbar">
+    <span style="color: var(--muted); font-size: 12px;">Filter:</span>
+    <select id="refFilter" onchange="renderReferences()">
+      <option value="all">All categories</option>
+      <option>Combat</option><option>Art Style</option><option>UI / UX</option><option>Animation</option>
+      <option>Sound / Music</option><option>Environment</option><option>Boss / Enemy</option>
+      <option>VFX</option><option>Other</option>
+    </select>
+  </div>
+  <div class="ref-grid" id="refGrid"></div>
 
   <h2>Workload by Developer Role</h2>
   <div class="role-grid" id="roleGrid"></div>
@@ -1557,6 +1643,8 @@ function signIn() {
   currentUser = { name, role };
   localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
   try { state = JSON.parse(localStorage.getItem(storageKeyForUser()) || '{}'); } catch (e) { state = {}; }
+  // Push a presence record so the user appears in Team Progress immediately
+  saveState();
   renderUserPanel();
   refreshGlobal();
   refreshOwnership();
@@ -1629,8 +1717,125 @@ refreshGlobal = function () {
   refreshOwnership();
 };
 
+// --- References ---
+const REF_KEY = 'sr_roadmap_refs_v1';
+let references = {}; // id -> { url, caption, category, author, ts }
+
+function loadReferences() {
+  try { references = JSON.parse(localStorage.getItem(REF_KEY) || '{}'); } catch (e) { references = {}; }
+}
+function saveReferencesLocal() {
+  try { localStorage.setItem(REF_KEY, JSON.stringify(references)); } catch (e) {}
+}
+
+function classifyUrl(url) {
+  if (!url) return 'link';
+  if (/\.(png|jpe?g|gif|webp|svg|bmp)(\?|$)/i.test(url)) return 'image';
+  if (/(youtube\.com\/watch|youtu\.be\/)/i.test(url)) return 'youtube';
+  if (/\.(mp4|webm|mov)(\?|$)/i.test(url)) return 'video';
+  return 'link';
+}
+function youTubeId(url) {
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+  return m ? m[1] : null;
+}
+
+function addReference() {
+  const url = document.getElementById('refUrl').value.trim();
+  const caption = document.getElementById('refCaption').value.trim();
+  const category = document.getElementById('refCategory').value;
+  if (!url) { alert('Paste a URL first'); return; }
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const ref = {
+    id,
+    url,
+    caption: caption || '(no caption)',
+    category,
+    author: currentUser ? currentUser.name : 'Anonymous',
+    ts: Date.now(),
+  };
+  references[id] = ref;
+  saveReferencesLocal();
+  if (firebaseEnabled) {
+    fbDb.ref('roadmap/references/' + id).set(ref).catch(e => console.warn('Ref write failed:', e));
+  }
+  document.getElementById('refUrl').value = '';
+  document.getElementById('refCaption').value = '';
+  renderReferences();
+}
+
+function deleteReference(id) {
+  if (!confirm('Delete this reference?')) return;
+  delete references[id];
+  saveReferencesLocal();
+  if (firebaseEnabled) {
+    fbDb.ref('roadmap/references/' + id).remove().catch(e => console.warn('Ref delete failed:', e));
+  }
+  renderReferences();
+}
+
+function renderReferences() {
+  const grid = document.getElementById('refGrid');
+  if (!grid) return;
+  const filter = document.getElementById('refFilter').value;
+  grid.innerHTML = '';
+  const list = Object.values(references).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  const visible = filter === 'all' ? list : list.filter(r => r.category === filter);
+  if (visible.length === 0) {
+    grid.innerHTML = '<div class="ref-empty">No references yet. Paste a URL above to add one.</div>';
+    return;
+  }
+  visible.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'ref-card';
+    let mediaHtml;
+    const kind = classifyUrl(r.url);
+    if (kind === 'image') {
+      mediaHtml = `<a href="${r.url}" target="_blank"><img src="${r.url}" alt="" onerror="this.outerHTML='<div class=\\'link-fallback\\'>Image failed to load.<br><a href=&quot;${r.url}&quot; target=&quot;_blank&quot;>Open link</a></div>'" /></a>`;
+    } else if (kind === 'youtube') {
+      const vid = youTubeId(r.url);
+      if (vid) {
+        mediaHtml = `<iframe src="https://www.youtube.com/embed/${vid}" allowfullscreen></iframe>`;
+      } else {
+        mediaHtml = `<div class="link-fallback"><a href="${r.url}" target="_blank">${r.url}</a></div>`;
+      }
+    } else if (kind === 'video') {
+      mediaHtml = `<video src="${r.url}" controls style="width:100%;height:100%;object-fit:cover"></video>`;
+    } else {
+      mediaHtml = `<div class="link-fallback"><a href="${r.url}" target="_blank">${r.url}</a></div>`;
+    }
+    const dateStr = new Date(r.ts || Date.now()).toLocaleDateString();
+    card.innerHTML = `
+      <div class="ref-media">${mediaHtml}</div>
+      <div class="ref-meta">
+        <div class="ref-cat">${r.category}</div>
+        <div class="ref-caption">${escapeHtml(r.caption)}</div>
+        <div class="ref-foot">
+          <span class="ref-author">${escapeHtml(r.author)} · ${dateStr}</span>
+          <button class="ref-delete" onclick="deleteReference('${r.id}')" title="Delete">✕</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+}
+
+function subscribeReferencesFirebase() {
+  if (!firebaseEnabled) return;
+  fbDb.ref('roadmap/references').on('value', snap => {
+    references = snap.val() || {};
+    saveReferencesLocal();
+    renderReferences();
+  });
+}
+
 loadState();
 loadLog();
+loadReferences();
 fillRoleDropdown();
 renderUserPanel();
 renderSyncBadge();
@@ -1646,6 +1851,8 @@ refreshFocus();
 refreshGlobal();
 refreshOwnership();
 subscribeFirebase();
+subscribeReferencesFirebase();
+renderReferences();
 document.querySelector('.phase[data-phase="1"]').classList.add('open');
 
 /* ===========================================================
